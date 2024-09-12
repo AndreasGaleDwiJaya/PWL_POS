@@ -19,10 +19,10 @@ class UserController extends Controller
         //     'password' => Hash::make('12345'),
         //     'level_id' => 3
         // ];
-        // UserModel::insert($data); // Tambahkan data ke tabel m_user
+        // UserModel::insert($data);
 
         // Coba akses model UserModel
-        $user = UserModel::all(); // Ambil semua data dari tabel m_user
+        $user = UserModel::all();
         return view('user', ['data' => $user]);
 
         $data = [

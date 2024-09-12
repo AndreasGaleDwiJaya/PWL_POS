@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html>
 <head>
     <title>Data User</title>
@@ -23,3 +24,4 @@
     </table>
 </body>
 </html>
+
