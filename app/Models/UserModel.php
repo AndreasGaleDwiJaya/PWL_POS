@@ -11,4 +11,7 @@ class UserModel extends Model
 
     protected $table = 'm_user';
     protected $primarykey = 'user_id';
+
+    //Jobsheet 4-Prartikum 1
+    protected $fillable = ['level_id', 'username', 'nama'];
 }
