@@ -78,7 +78,7 @@ class UserController extends Controller
     // }
 
     //Jobsheet 4 - Praktikum 2.5
-    public function index() {
+    // public function index() {
     //         $user = UserModel::create([
     //             'username' => 'manager55',
     //             'nama' => 'Manager55',
@@ -103,23 +103,79 @@ class UserController extends Controller
     //     $user->isDirty(); // false
     //     $user->isClean(); // true
     //     dd($user->isDirty());
+    // }
 
         //Modifikasi 
-        $user = UserModel::create([
-            'username' => 'manager11',
-            'nama' => 'Manager11',
-            'password' => Hash::make(12345),
-            'level_id' => 2,
-        ]);
+        // $user = UserModel::create([
+        //     'username' => 'manager11',
+        //     'nama' => 'Manager11',
+        //     'password' => Hash::make(12345),
+        //     'level_id' => 2,
+        // ]);
         
-        $user->username = 'manager12';
+        // $user->username = 'manager12';
         
-        $user->save();
+        // $user->save();
         
-        $user->wasChanged(); // true
-        $user->wasChanged('username'); // true
-        $user->wasChanged(['username', 'level_id']); // true
-        $user->wasChanged('nama'); // false
-        dd($user->wasChanged(['nama', 'username'])); //true
-         }
+        // $user->wasChanged(); // true
+        // $user->wasChanged('username'); // true
+        // $user->wasChanged(['username', 'level_id']); // true
+        // $user->wasChanged('nama'); // false
+        // dd($user->wasChanged(['nama', 'username'])); //true
+
+
+    //Praktikum 2.6
+    public function index() {
+            
+        $user = UserModel::all();
+            return view('user', ['data' => $user]);
+        }
+
+        public function tambah() {
+            return view('user_tambah');
+        }
+
+        public function tambah_simpan(Request $request){
+            UserModel::create([
+                'username' => $request->username,
+                'nama' => $request->nama,
+                'password' => Hash::make($request->password),
+                'level_id' => $request->level_id
+            ]);
+        
+            return redirect('/user');
+        }
+
+        public function ubah($id){
+            $user = UserModel::where('user_id', $id)->first(); // Gunakan user_id
+            return view('user_ubah', ['data' => $user]);
+        }
+
+        public function ubah_simpan($id, Request $request){
+            // Cari user berdasarkan user_id
+            $user = UserModel::find($id); // Laravel sekarang menggunakan user_id sebagai primary key
+        
+            // Update field yang diubah
+            $user->username = $request->username;
+            $user->nama = $request->nama;
+        
+            // Hashing password baru hanya jika diubah
+            if (!empty($request->password)) {
+                $user->password = Hash::make($request->password);
+            }
+        
+            $user->level_id = $request->level_id;
+        
+            // Simpan perubahan
+            $user->save();
+        
+            return redirect('/user');
+        }
+
+        public function hapus($id){
+            $user = UserModel::find($id);
+            $user->delete();
+
+            return redirect('/user');
+        }
 }
