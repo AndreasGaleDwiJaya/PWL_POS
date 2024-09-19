@@ -125,57 +125,69 @@ class UserController extends Controller
 
 
     //Praktikum 2.6
-    public function index() {
+    // public function index() {
             
-        $user = UserModel::all();
+    //     $user = UserModel::all();
+    //         return view('user', ['data' => $user]);
+    //     }
+
+    //     public function tambah() {
+    //         return view('user_tambah');
+    //     }
+
+    //     public function tambah_simpan(Request $request){
+    //         UserModel::create([
+    //             'username' => $request->username,
+    //             'nama' => $request->nama,
+    //             'password' => Hash::make($request->password),
+    //             'level_id' => $request->level_id
+    //         ]);
+        
+    //         return redirect('/user');
+    //     }
+
+    //     public function ubah($id){
+    //         $user = UserModel::where('user_id', $id)->first(); // Gunakan user_id
+    //         return view('user_ubah', ['data' => $user]);
+    //     }
+
+    //     public function ubah_simpan($id, Request $request){
+    //         // Cari user berdasarkan user_id
+    //         $user = UserModel::find($id); // Laravel sekarang menggunakan user_id sebagai primary key
+        
+    //         // Update field yang diubah
+    //         $user->username = $request->username;
+    //         $user->nama = $request->nama;
+        
+    //         // Hashing password baru hanya jika diubah
+    //         if (!empty($request->password)) {
+    //             $user->password = Hash::make($request->password);
+    //         }
+        
+    //         $user->level_id = $request->level_id;
+        
+    //         // Simpan perubahan
+    //         $user->save();
+        
+    //         return redirect('/user');
+    //     }
+
+    //     public function hapus($id){
+    //         $user = UserModel::find($id);
+    //         $user->delete();
+
+    //         return redirect('/user');
+    //     }
+
+        //Pratikum 2.7
+        // public function index(){
+        //     $user = UserModel::with('level')->get();
+        //     dd($user);
+        // }
+
+        public function index(){
+            
+            $user = UserModel::with('level')->get();
             return view('user', ['data' => $user]);
-        }
-
-        public function tambah() {
-            return view('user_tambah');
-        }
-
-        public function tambah_simpan(Request $request){
-            UserModel::create([
-                'username' => $request->username,
-                'nama' => $request->nama,
-                'password' => Hash::make($request->password),
-                'level_id' => $request->level_id
-            ]);
-        
-            return redirect('/user');
-        }
-
-        public function ubah($id){
-            $user = UserModel::where('user_id', $id)->first(); // Gunakan user_id
-            return view('user_ubah', ['data' => $user]);
-        }
-
-        public function ubah_simpan($id, Request $request){
-            // Cari user berdasarkan user_id
-            $user = UserModel::find($id); // Laravel sekarang menggunakan user_id sebagai primary key
-        
-            // Update field yang diubah
-            $user->username = $request->username;
-            $user->nama = $request->nama;
-        
-            // Hashing password baru hanya jika diubah
-            if (!empty($request->password)) {
-                $user->password = Hash::make($request->password);
-            }
-        
-            $user->level_id = $request->level_id;
-        
-            // Simpan perubahan
-            $user->save();
-        
-            return redirect('/user');
-        }
-
-        public function hapus($id){
-            $user = UserModel::find($id);
-            $user->delete();
-
-            return redirect('/user');
         }
 }
