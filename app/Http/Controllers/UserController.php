@@ -210,9 +210,12 @@ class UserController extends Controller
 
             $activeMenu = 'user'; // Set menu yang sedang aktif
 
+            $level = LevelModel::all(); // ambil data level untuk filter level
+
             return view('user.index', [
                 'breadcrumb' => $breadcrumb, 
                 'page' => $page, 
+                'level' => $level,
                 'activeMenu' => $activeMenu
             ]);
         }
@@ -222,6 +225,11 @@ class UserController extends Controller
         {
             $users = UserModel::select('user_id', 'username', 'nama', 'level_id')
                 ->with('level');
+
+            //Filter data user berdasarkan level_id
+            if ($request->level_id) {
+                $users->where('level_id', $request->level_id);
+            }
 
             return DataTables::of($users)
                 // Menambahkan kolom index / no urut (default nama kolom: DT_RowIndex)
@@ -374,5 +382,54 @@ class UserController extends Controller
             return redirect('/user')->with('error', 'Data user gagal dihapus karena masih terdapat tabel lain yang terkait dengan data ini');
         }
     }
+
+//     //Pratikum 4 jobsheet 5
+//     // Menampilkan halaman awal user
+//          public function index() {
+        
+//             $breadcrumb = (object) [
+//                 'title' => 'Daftar User',
+//                 'list' => ['Home', 'User']
+//             ];
+            
+//             $page = (object) [
+//                 'title' => 'Daftar user yang terdaftar dalam sistem'
+//             ];
+
+//             $activeMenu = 'user';
+
+//             $level = LevelModel::all(); // ambil data level untuk filter level
+    
+//             return view('user.index', ['breadcrumb' => $breadcrumb, 'page' => $page, 'level' => $level, 'activeMenu' => $activeMenu]);
+//         }
+
+// // Ambil data user dalam bentuk json untuk datatables
+//     public function list(Request $request)
+//     {
+//         // Ambil data user dengan relasi level
+//         $users = UserModel::select('user_id', 'username', 'nama', 'level_id')
+//             ->with('level');
+
+//         // Filter data user berdasarkan level_id jika ada filter
+//         if ($request->level_id) {
+//             $users->where('level_id', $request->level_id);
+//         }
+        
+//         return DataTables::of($users)
+//             // Menambahkan kolom index / nomor urut (default nama kolom: DT_RowIndex)
+//             ->addIndexColumn()
+//             // Menambahkan kolom aksi (tombol Detail, Edit, Hapus)
+//             ->addColumn('aksi', function ($user) {
+//                 $btn = '<a href="'.url('/user/' . $user->user_id).'" class="btn btn-info btn-sm">Detail</a> ';
+//                 $btn .= '<a href="'.url('/user/' . $user->user_id . '/edit').'" class="btn btn-warning btn-sm">Edit</a> ';
+//                 $btn .= '<form class="d-inline-block" method="POST" action="'.url('/user/'.$user->user_id).'" onsubmit="return confirm(\'Apakah Anda yakin menghapus data ini?\');">'
+//                     . csrf_field() . method_field('DELETE') .
+//                     '<button type="submit" class="btn btn-danger btn-sm">Hapus</button></form>';
+//                 return $btn;
+//             })
+//             // Memberitahu DataTables bahwa kolom aksi adalah HTML
+//             ->rawColumns(['aksi'])
+//             ->make(true);
+//     }
 
 }
