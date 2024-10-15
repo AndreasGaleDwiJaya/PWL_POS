@@ -7,6 +7,7 @@ use App\Models\KategoriModel;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Validator;   //mengimpor validator
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class BarangController extends Controller
 {
@@ -283,4 +284,87 @@ class BarangController extends Controller
             return redirect('/barang')->with('error', 'Data barang gagal dihapus karena terdapat tabel lain yang terkait dengan data ini');
         }
     }
+
+    // JS 8
+    public function import()
+    {
+        return view('barang.import');
+    }
+
+    public function import_ajax(Request $request)
+    {
+        if($request->ajax() || $request->wantsJson()){
+            // Validasi file harus berformat xlsx dan maksimal ukuran 1MB
+            $rules = [
+                'file_barang' => ['required', 'mimes:xlsx', 'max:1024']
+            ];
+            $validator = Validator::make($request->all(), $rules);
+            
+            if($validator->fails()){
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validasi Gagal',
+                    'msgField' => $validator->errors()
+                ]);
+            }
+
+            try {
+                // Ambil file dari request
+                $file = $request->file('file_barang'); 
+                $reader = IOFactory::createReader('Xlsx'); // Load reader file Excel
+                $reader->setReadDataOnly(true); // Hanya membaca data
+                $spreadsheet = $reader->load($file->getRealPath()); // Load file excel
+                $sheet = $spreadsheet->getActiveSheet(); // Ambil sheet yang aktif
+                $data = $sheet->toArray(null, false, true, true); // Ambil data Excel
+
+                // Siapkan array untuk menampung data yang akan diinsert
+                $insert = [];
+                
+                if(count($data) > 1){ // Jika data lebih dari 1 baris
+                    foreach ($data as $baris => $value) {
+                        if($baris > 1){ // Baris ke-1 adalah header, maka lewati
+                            // Pastikan semua kolom tidak kosong sebelum insert
+                            if ($value['A'] && $value['B'] && $value['C'] && $value['D'] && $value['E']) {
+                                $insert[] = [
+                                    'kategori_id' => $value['A'],
+                                    'barang_kode' => $value['B'],
+                                    'barang_nama' => $value['C'],
+                                    'harga_beli' => $value['D'],
+                                    'harga_jual' => $value['E'],
+                                    'created_at' => now(),
+                                ];
+                            }
+                        }
+                    }
+
+                    if(count($insert) > 0){
+                        // Insert data ke database, jika data sudah ada, maka diabaikan
+                        BarangModel::insertOrIgnore($insert);
+
+                        return response()->json([
+                            'status' => true,
+                            'message' => 'Data barang berhasil diimpor'
+                        ]);
+                    } else {
+                        return response()->json([
+                            'status' => false,
+                            'message' => 'Tidak ada data barang yang valid untuk diimpor'
+                        ]);
+                    }
+                } else {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'File kosong atau tidak ada data yang diimpor'
+                    ]);
+                }
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage()
+                ]);
+            }
+        }
+        return redirect('/');
+    }
+
 }

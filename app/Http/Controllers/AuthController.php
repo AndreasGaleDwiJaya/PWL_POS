@@ -8,67 +8,64 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
+    // Menampilkan halaman login
     public function login()
     {
-        if (Auth::check()) { // jika sudah login, maka redirect ke halaman home 
+        if (Auth::check()) {
             return redirect('/');
         }
         return view('auth.login');
     }
 
+    // Proses login dan respons JSON untuk AJAX request
     public function postlogin(Request $request)
     {
-        if ($request->ajax() || $request->wantsJson()) {
-            $credentials = $request->only('username', 'password');
+        $credentials = $request->only('username', 'password');
 
-            if (Auth::attempt($credentials)) {
-                return response()->json([
-                    'status' => true,
-                    'message' => 'Login Berhasil',
-                    'redirect' => url('/')
-                ]);
-            }
-
-            return response()->json([
-                'status' => false,
-                'message' => 'Login Gagal'
-            ]);
-        }
-
-        return redirect('login');
-    }
-
-    public function register()
-    {
-        return view('auth.register');
-    }
-
-    public function postRegister(Request $request)
-    {
-        if ($request->ajax() || $request->wantsJson()) {
-            $request->validate([
-                'username' => 'required|string|min:3|unique:m_user,username',
-                'name' => 'required|string|max:100',
-                'password' => 'required|min:5',
-            ]);
-
-            UserModel::create([
-                'username' => $request->username,
-                'name' => $request->name,
-                'password' => bcrypt($request->password),
-                'level_id' => 3
-            ]);
-
+        if (Auth::attempt($credentials)) {
             return response()->json([
                 'status' => true,
-                'message' => 'Register Berhasil',
-                'redirect' => url('/login')
+                'message' => 'Login Berhasil',
+                'redirect' => url('/')
             ]);
         }
 
-        return redirect('register');
+        return response()->json([
+            'status' => false,
+            'message' => 'Login Gagal'
+        ]);
     }
 
+    // Method untuk menampilkan form register
+    public function register()
+    {
+        return redirect()->action([RegistrationController::class, 'registration']);
+    }
+
+    // Proses register user baru (jika mau ditangani di sini juga, sesuaikan dengan RegistrationController)
+    public function postRegister(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string|min:3|unique:m_user,username',
+            'nama' => 'required|string|max:100',
+            'password' => 'required|min:5',
+        ]);
+
+        UserModel::create([
+            'username' => $request->username,
+            'nama' => $request->nama,
+            'password' => bcrypt($request->password),
+            'level_id' => 2 // Default level jika diperlukan
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Register Berhasil',
+            'redirect' => url('/login')
+        ]);
+    }
+
+    // Proses logout dan invalidasi sesi
     public function logout(Request $request)
     {
         Auth::logout();
@@ -78,3 +75,5 @@ class AuthController extends Controller
         return redirect('login');
     }
 }
+
+
