@@ -20,20 +20,28 @@ class AuthController extends Controller
     // Proses login dan respons JSON untuk AJAX request
     public function postlogin(Request $request)
     {
-        $credentials = $request->only('username', 'password');
+        if ($request->ajax() || $request->wantsJson()) {
+            $credentials = $request->only('username', 'password');
 
-        if (Auth::attempt($credentials)) {
+            if (Auth::attempt($credentials)) {
+                if (Auth::user()->image_profile != "") {
+                    session(['profile_img_path' => Auth::user()->image_profile]);
+                }
+                session(['user_id' => Auth::user()->user_id]);
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Login Berhasil',
+                    'redirect' => url('/')
+                ]);
+            }
+
             return response()->json([
-                'status' => true,
-                'message' => 'Login Berhasil',
-                'redirect' => url('/')
+                'status' => false,
+                'message' => 'Login Gagal'
             ]);
         }
 
-        return response()->json([
-            'status' => false,
-            'message' => 'Login Gagal'
-        ]);
+        return redirect('login');
     }
 
     // Method untuk menampilkan form register

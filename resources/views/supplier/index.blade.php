@@ -95,6 +95,7 @@
                     },
                     {
                         data: "aksi", // Kolom aksi (Edit, Hapus)
+                        className: "text-center",
                         orderable: false,
                         searchable: false
                     }

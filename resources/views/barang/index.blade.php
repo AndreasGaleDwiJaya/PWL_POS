@@ -7,6 +7,7 @@
         <div class="card-tools">
             <button onclick="modalAction('{{ url('/barang/import') }}')" class="btn btn-sm btn-info mt-1">Impor Barang</button>
             <a href="{{ url('/barang/export_excel') }}" class="btn btn-sm btn-info mt-1"><i class="fa fa-file-excel"></i> Export Barang</a>
+            <a href="{{ url('/barang/export_pdf') }}" class="btn btn-sm btn-warning mt-1"><i class="fa fa-file-pdf"></i> Export Barang</a> 
             <button onclick="modalAction('{{url('barang/create_ajax')}}')" class="btn btn-sm btn-success mt-1">Tambah Data (Ajax)</button>
         </div>          
       </div> 
@@ -82,14 +83,14 @@
           { 
             data: "barang_kode",                
             className: "",
-            width: "10%",
+            width: "12%",
             orderable: true,     
             searchable: true     
           },
           { 
             data: "barang_nama",                
             className: "",
-            width: "30%",
+            width: "20%",
             orderable: true,     
             searchable: true     
           },
@@ -116,14 +117,14 @@
           { 
             data: "kategori.kategori_nama",                
             className: "",
-            width: "14%",
+            width: "15%",
             orderable: true,     
             searchable: false     
           },
           { 
             data: "aksi",                
             className: "text-center",
-            width: "14%",
+            width: "21%",
             orderable: false,     
             searchable: false
           } 
