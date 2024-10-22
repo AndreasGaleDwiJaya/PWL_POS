@@ -60,7 +60,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/export_excel', [UserController::class, 'export_excel']); //export excel
         Route::get('/export_pdf', [UserController::class, 'export_pdf']); //export excel
         Route::delete('/{id}', [UserController::class, 'destroy']); // menghapus data user
-        
     });    
 
     Route::middleware(['authorize:ADM'])->group(function () {

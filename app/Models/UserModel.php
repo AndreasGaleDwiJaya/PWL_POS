@@ -2,40 +2,42 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Foundation\Auth\User as Authenticatable; //implementasi class Authenticatable
 
 class UserModel extends Authenticatable
 {
     use HasFactory;
 
-    protected $table = 'm_user';
-    protected $primaryKey = 'user_id';
-    protected $fillable = ['level_id', 'username', 'nama', 'password', 'file_profil', 'created_at', 'updated_at'];
+    protected $table = 'm_user';    //table yang akan digunakan
+    protected $primaryKey = 'user_id'; //primary key dari table
 
-    protected $hidden = ['password'];
+    protected $fillable = ['level_id', 'username', 'nama', 'password', 'avatar','created_at', 'updated_at'];
 
-    protected $casts = ['password' => 'hashed'];
+   protected $hidden = ['password']; //jangan ditampilkan saat select
 
-    public function level(): BelongsTo
-    {
+   protected $casts = ['password' => 'hashed'];  //casting password agar otomatis di hash
+   
+   //relasi ke tabel level
+    public function level(): BelongsTo {
+
         return $this->belongsTo(LevelModel::class, 'level_id', 'level_id');
     }
 
-    public function getRoleName(): string
-    {
+    // mendapatkan nama role
+    public function getRoleName():string {
         return $this->level->level_nama;
     }
 
-    public function hasRole($role): bool
-    {
+    //cek apakah user memiliki role tertentu
+    public function hasRole($role):bool {
         return $this->level->level_kode == $role;
     }
 
-    public function getRole()
-    {
+    public function getRole(){
         return $this->level->level_kode;
     }
+
 }

@@ -4,9 +4,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="exampleModalLabel">Tambah Data User</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -30,14 +28,14 @@
                     <small id="error-nama" class="error-text form-text text-danger"></small>
                 </div>
                 <div class="form-group">
-                    <label>Foto Profil</label>
-                    <input type="file" name="file_profil" id="file_profil" class="form-control" required>
-                    <small id="error-file_profil" class="error-text form-text text-danger"></small>
+                    <label>Password</label>
+                    <input value="" type="password" name="password" id="password" class="formcontrol" required>
+                    <small id="error-password" class="error-text form-text text-danger"></small>
                 </div>
                 <div class="form-group">
-                    <label>Password</label>
-                    <input value="" type="password" name="password" id="password" class="form-control" required>
-                    <small id="error-password" class="error-text form-text text-danger"></small>
+                    <label>Pilih Foto Profil</label>
+                    <input type="file" name="avatar" id="avatar" class="formcontrol">
+                    <small id="error-avatar" class="error-text form-text textdanger"></small>
                 </div>
             </div>
             <div class="modal-footer">
@@ -61,54 +59,68 @@
                     minlength: 3,
                     maxlength: 20
                 },
-                nama: {  // Ganti 'name' menjadi 'nama' agar konsisten dengan controller
+                nama: {
                     required: true,
                     minlength: 3,
                     maxlength: 100
                 },
                 password: {
                     required: true,
-                    minlength: 6,
+                    minlength: 5,
                     maxlength: 20
                 },
-                file_profil: {
-                    required: true,
-                    extension: "jpg|jpeg|png|ico|bmp"
+                avatar: {
+                    extension: "jpg|jpeg|png"
                 }
             },
             submitHandler: function(form) {
-                var formData = new FormData(form); // Jadikan form ke FormData untuk menghandle file 
+            var formData = new FormData(form); // Gunakan FormData untuk file upload
 
-                $.ajax({
-                    url: form.action,
-                    type: form.method,
-                    data: formData,
-                    processData: false, // Menjaga agar file dikirim sebagai multipart/form-data
-                    contentType: false,
-                    success: function(response) {
-                        if (response.status) {
-                            $('#myModal').modal('hide');
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Berhasil',
-                                text: response.message
-                            });
-                            dataUser.ajax.reload();
-                        } else {
-                            $('.error-text').text('');
-                            $.each(response.msgField, function(prefix, val) {
-                                $('#error-' + prefix).text(val[0]);
-                            });
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Terjadi Kesalahan',
-                                text: response.message
-                            });
-                        }
+            $.ajax({
+                url: form.action,
+                type: form.method,
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(response) {
+                    if (response.status) {
+                        // Menampilkan notifikasi berhasil
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil',
+                            text: response.message
+                        }).then(function() {
+                            // Reload halaman atau update data setelah Swal ditutup
+                            if (typeof dataUser !== 'undefined') {
+                                dataUser.ajax.reload(); // Reload data table jika ada
+                            } else {
+                                location.reload(); // Reload halaman jika tidak ada dataUser
+                            }
+                        });
+                    } else {
+                        // Menampilkan error dari validasi field
+                        $('.error-text').text('');
+                        $.each(response.msgField, function(prefix, val) {
+                            $('#error-' + prefix).text(val[0]);
+                        });
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Terjadi Kesalahan',
+                            text: response.message
+                        });
                     }
-                });
-                return false;
-            },
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Terjadi kesalahan. Silakan coba lagi nanti.'
+                    });
+                }
+            });
+            return false;
+        },
             errorElement: 'span',
             errorPlacement: function(error, element) {
                 error.addClass('invalid-feedback');

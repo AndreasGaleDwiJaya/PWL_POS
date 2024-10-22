@@ -75,7 +75,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url('/logout') }}" class="nav-link {{ $activeMenu == 'penjualan' ? 'active' : '' }} ">
+                <a href="{{ url('/logout') }}" class="nav-link {{ $activeMenu == 'logout' ? 'active' : '' }} ">
                     <i class="nav-icon fas fa-door-open"></i>
                     <p>Logout</p>
                 </a>
