@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LevelModel;
 use App\Models\UserModel;
+use App\Models\LevelModel;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
@@ -14,11 +14,11 @@ class ProfileController extends Controller
     {
         $id = session('user_id');
         $breadcrumb = (object) [
-            'title' => 'Profile',
+            'title' => 'Profil',
             'list' => ['Home', 'profile']
         ];
         $page = (object) [
-            'title' => 'Profile Anda'
+            'title' => 'Profil'
         ];
         $activeMenu = 'profile'; // set menu yang sedang aktif
         $user = UserModel::with('level')->find($id);
@@ -26,137 +26,130 @@ class ProfileController extends Controller
         return view('profile.index', ['breadcrumb' => $breadcrumb, 'page' => $page, 'level' => $level, 'user' => $user, 'activeMenu' => $activeMenu]);
     }
 
-    public function show(string $id)
-    {
-        $user = UserModel::with('level')->find($id);
-        $breadcrumb = (object) ['title' => 'Detail User', 'list' => ['Home', 'User', 'Detail']];
-        $page = (object) ['title' => 'Detail user'];
-        $activeMenu = 'user'; // set menu yang sedang aktif
-        return view('user.show', ['breadcrumb' => $breadcrumb, 'page' => $page, 'user' => $user, 'activeMenu' => $activeMenu]);
-    }
-
     public function edit_ajax(string $id)
     {
         $user = UserModel::find($id);
         $level = LevelModel::select('level_id', 'level_nama')->get();
+
         return view('profile.edit_ajax', ['user' => $user, 'level' => $level]);
     }
 
+    // Menyimpan perubahan data user AJAX (termasuk foto)
     public function update_ajax(Request $request, $id)
     {
-        // cek apakah request dari ajax
         if ($request->ajax() || $request->wantsJson()) {
             $rules = [
-                'level_id' => 'nullable|integer',
-                'username' => 'nullable|max:20|unique:m_user,username,' . $id . ',user_id',
-                'nama' => 'nullable|max:100',
-                'password' => 'nullable|min:6|max:20'
+                'level_id' => 'required|integer',
+                'username' => 'required|max:20|unique:m_user,username,' . $id . ',user_id',
+                'nama'     => 'required|max:100',
+                'password' => 'nullable|min:5|max:20',
+                'avatar'     => 'nullable|mimes:jpeg,png,jpg|max:4096'
             ];
-            // use Illuminate\Support\Facades\Validator;
+
             $validator = Validator::make($request->all(), $rules);
+
             if ($validator->fails()) {
                 return response()->json([
-                    'status' => false, // respon json, true: berhasil, false: gagal
-                    'message' => 'Validasi gagal.',
-                    'msgField' => $validator->errors() // menunjukkan field mana yang error
+                    'status' => false,
+                    'message' => 'Validasi gagal!',
+                    'msgField' => $validator->errors()
                 ]);
             }
-            $check = UserModel::find($id);
-            if ($check) {
-                if (!$request->filled('level_id')) { // jika password tidak diisi, maka hapus dari request
-                    $request->request->remove('level_id');
+
+            $user = UserModel::find($id);
+
+            if ($user) {
+                // Update foto jika di-upload
+                if ($request->hasFile('avatar')) {
+                    $file = $request->file('avatar');
+                    $extension = $file->getClientOriginalExtension();
+                    $filename = time() . '.' . $extension;
+                    $path = 'adminlte/dist/img/';
+                    $file->move($path, $filename);
+
+                    // Hapus foto lama jika ada
+                    if ($user->avatar && file_exists(public_path($user->avatar))) {
+                        unlink(public_path($user->avatar));
+                    }
+
+                    $user->avatar = $path . $filename;
                 }
-                if (!$request->filled('username')) { // jika password tidak diisi, maka hapus dari request
-                    $request->request->remove('username');
+
+                // Update data lainnya
+                $user->username = $request->username;
+                $user->nama = $request->nama;
+                $user->level_id = $request->level_id;
+                
+                // Hanya update password jika diisi
+                if ($request->filled('password')) {
+                    $user->password = bcrypt($request->password);
                 }
-                if (!$request->filled('nama')) { // jika password tidak diisi, maka hapus dari request
-                    $request->request->remove('nama');
-                }
-                if (!$request->filled('password')) { // jika password tidak diisi, maka hapus dari request
-                    $request->request->remove('password');
-                }
-                $check->update([
-                    'username'  => $request->username,
-                    'nama'      => $request->nama,
-                    'password'  => $request->password ? bcrypt($request->password) : UserModel::find($id)->password,
-                    'level_id'  => $request->level_id
-                ]);
+
+                $user->save();
+
                 return response()->json([
                     'status' => true,
-                    'message' => 'Data berhasil diupdate'
+                    'message' => 'Data berhasil diupdate!'
                 ]);
             } else {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Data tidak ditemukan'
+                    'message' => 'Data tidak ditemukan!'
                 ]);
             }
         }
+
         return redirect('/');
     }
 
-    public function edit_foto(string $id)
-    {
-        $user = UserModel::find($id);
-        $level = LevelModel::select('level_id', 'level_nama')->get();
-        return view('profile.edit_foto', ['user' => $user, 'level' => $level]);
-    }
-
+    // Khusus untuk update foto
     public function update_foto(Request $request, $id)
     {
-        // cek apakah request dari ajax
         if ($request->ajax() || $request->wantsJson()) {
             $rules = [
-                'foto'   => 'required|mimes:jpeg,png,jpg|max:4096'
+                'avatar' => 'required|mimes:jpeg,png,jpg|max:4096'
             ];
-            // use Illuminate\Support\Facades\Validator;
+
             $validator = Validator::make($request->all(), $rules);
+
             if ($validator->fails()) {
                 return response()->json([
-                    'status' => false, // respon json, true: berhasil, false: gagal
+                    'status' => false,
                     'message' => 'Validasi gagal.',
-                    'msgField' => $validator->errors() // menunjukkan field mana yang error
+                    'msgField' => $validator->errors()
                 ]);
             }
-            $check = UserModel::find($id);
-            if ($check) {
-                if ($request->has('foto')) {
 
-                    if (isset($check->foto)) {
-                        $fileold = $check->foto;
-                        if (Storage::disk('public')->exists($fileold)) {
-                            Storage::disk('public')->delete($fileold);
-                        }
-                        $file = $request->file('foto');
-                        $filename = $check->foto;
-                        $path = 'image/profile/';
-                        $file->move($path, $filename);
-                        $pathname = $filename;
-                    } else {
-                        $file = $request->file('foto');
-                        $extension = $file->getClientOriginalExtension();
+            $user = UserModel::find($id);
 
-                        $filename = time() . '.' . $extension;
+            if ($user) {
+                if ($request->hasFile('avatar')) {
+                    $file = $request->file('avatar');
+                    $extension = $file->getClientOriginalExtension();
+                    $filename = time() . '.' . $extension;
+                    $path = 'adminlte/dist/img/';
+                    $file->move($path, $filename);
 
-                        $path = 'image/profile/';
-                        $file->move($path, $filename);
-                        $pathname = $path . $filename;
+                    // Hapus foto lama jika ada
+                    if ($user->avatar && file_exists(public_path($user->avatar))) {
+                        unlink(public_path($user->avatar));
                     }
+
+                    $user->update(['avatar' => $path . $filename]);
+
+                    return response()->json([
+                        'status' => true,
+                        'message' => 'Foto berhasil diupdate!'
+                    ]);
                 }
-                $check->update([
-                    'foto'      => $pathname
-                ]);
-                return response()->json([
-                    'status' => true,
-                    'message' => 'Data berhasil diupdate'
-                ]);
             } else {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Data tidak ditemukan'
+                    'message' => 'Data tidak ditemukan!'
                 ]);
             }
         }
+
         return redirect('/');
     }
 }

@@ -238,8 +238,8 @@ class DetailController extends Controller
         foreach ($detail as $key => $value) {
             $sheet->setCellValue('A' . $baris, $no);
             $sheet->setCellValue('B' . $baris, $value->penjualan->penjualan_kode);
-            $sheet->setCellValue('D' . $baris, $value->barang->barang_nama);
-            $sheet->setCellValue('C' . $baris, $value->harga);
+            $sheet->setCellValue('C' . $baris, $value->barang->barang_nama); // Ini harus ada di kolom C
+$sheet->setCellValue('D' . $baris, $value->harga); // Ini harus ada di kolom D
             $sheet->setCellValue('E' . $baris, $value->jumlah);
             $baris++;
             $no++;
@@ -249,7 +249,7 @@ class DetailController extends Controller
         }
         $sheet->setTitle('Data Detail Penjualan'); // set title sheet
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $filename = 'Data detail Penjualan ' . date('Y-m-d H:i:s') . '.xlsx';
+        $filename = 'Data_detail_Penjualan_' . now()->format('Y-m-d_H:i:s') . '.xlsx';
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $filename . '"');
         header('Cache-Control: max-age=0');

@@ -213,7 +213,7 @@
                     orderable: true,
                     searchable: false
                 }, {
-                    data: "barang.barang_id",
+                    data: "barang_id",
                     className: "",
                     width: "37%",
                     orderable: true,
