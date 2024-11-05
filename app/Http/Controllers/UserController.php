@@ -659,6 +659,7 @@ class UserController extends Controller
 
     public function export_pdf(){
         //ambil data yang akan di export
+        set_time_limit(120); 
         $user = UserModel::select('level_id', 'user_id', 'username', 'nama','password')
         ->orderBy('level_id')
         ->with('level')

@@ -90,8 +90,8 @@
                 @foreach ($detail as $b)
                     <tr>
                         <td class="text-center">{{ $loop->iteration }}</td>
-                        <td>{{ $b->penjualan->penjualan_id }}</td>
-                        <td>{{ $b->barang->barang_nama }}</td>
+                        <td>{{ optional($b->penjualan)->penjualan_id ?? 'Tidak Ditemukan' }}</td>
+                        <td>{{ optional($b->barang)->barang_nama ?? 'Tidak Ditemukan' }}</td>
                         <td>{{ $b->harga }}</td>
                         <td class="text-right">{{ $b->jumlah }}</td>
                     </tr>

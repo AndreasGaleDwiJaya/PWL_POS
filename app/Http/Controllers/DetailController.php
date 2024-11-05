@@ -33,25 +33,26 @@ class DetailController extends Controller
         ]);
     }
     public function list(Request $request)
-    {
-        $detail = DetailModel::select('detail_id', 'penjualan_id', 'barang_id', 'harga', 'jumlah')
-            ->with('barang')
-            ->with('penjualan');
-        if ($request->barang_id) {
-            $detail->where('barang_id', $request->barang_id);
-        }
-        return DataTables::of($detail)
-            ->addIndexColumn() // menambahkan kolom index / no urut (default nama kolom: DT_RowIndex) 
-            ->addColumn('aksi', function ($detail) { // menambahkan kolom aksi 
-                $btn = '<a href="' . url('/detail/' . $detail->detail_id) . '" class="btn btn-info btn-sm">Detail</a> ';
-                // $btn .= '<button onclick="modalAction(\'' . url('/detail/' . $detail->detail_id . '/edit_ajax') . '\')" class="btn btn-warning btn-sm">Edit</button> ';
-                $btn .= '<a onclick="modalAction(\'' . url('/detail/' . $detail->detail_id . '/edit_ajax') . '\')" class="btn btn-warning btn-sm">Edit</a> ';
-                $btn .= '<button onclick="modalAction(\'' . url('/detail/' . $detail->detail_id . '/delete_ajax') . '\')" class="btn btn-danger btn-sm">Hapus</button> ';
-                return $btn;
-            })
-            ->rawColumns(['aksi']) // memberitahu bahwa kolom aksi adalah html 
-            ->make(true);
+{
+    $detail = DetailModel::select('detail_id', 'penjualan_id', 'barang_id', 'harga', 'jumlah')
+        ->with(['barang', 'penjualan']); // Pastikan dengan relasi yang benar
+
+    if ($request->barang_id) {
+        $detail->where('barang_id', $request->barang_id);
     }
+
+    return DataTables::of($detail)
+        ->addIndexColumn()
+        ->addColumn('aksi', function ($detail) {
+            $btn = '<button onclick="modalAction(\'' . url('/detail/' . $detail->detail_id . '/show_ajax') . '\')" class="btn btn-info btn-sm">Detail</button> ';
+            $btn .= '<button onclick="modalAction(\'' . url('/detail/' . $detail->detail_id . '/edit_ajax') . '\')" class="btn btn-warning btn-sm">Edit</button> ';
+            $btn .= '<button onclick="modalAction(\'' . url('/detail/' . $detail->detail_id . '/delete_ajax') . '\')" class="btn btn-danger btn-sm">Hapus</button> ';
+            return $btn;
+        })
+        ->rawColumns(['aksi'])
+        ->make(true);
+}
+
     public function show(string $id)
     {
         $detail = DetailModel::with('barang')->find($id);
@@ -162,6 +163,21 @@ class DetailController extends Controller
         }
         return redirect('/');
     }
+
+    public function show_ajax(string $id)
+{
+    $detail = DetailModel::with('barang', 'penjualan')->find($id);
+
+    if (!$detail) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Data yang Anda cari tidak ditemukan'
+        ], 404);
+    }
+
+    return view('detail.show_ajax', ['detail' => $detail]);
+}
+    
     public function import()
     {
         return view('detail.import');
@@ -218,53 +234,73 @@ class DetailController extends Controller
         return redirect('/');
     }
     public function export_excel()
-    {
-        // ambil data barang yang akan di export
-        $detail = DetailModel::select('detail_id', 'penjualan_id', 'barang_id', 'harga', 'jumlah')
-            ->orderBy('detail_id')
-            ->with('barang')
-            ->get();
-        // load library excel
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet(); // ambil sheet yang aktif
-        $sheet->setCellValue('A1', 'No');
-        $sheet->setCellValue('B1', 'Kode Penjualan');
-        $sheet->setCellValue('C1', 'Nama Barang');
-        $sheet->setCellValue('D1', 'Harga');
-        $sheet->setCellValue('E1', 'Jumlah');
-        $sheet->getStyle('A1:E1')->getFont()->setBold(true); // bold header
-        $no = 1; // nomor data dimulai dari 1
-        $baris = 2; // baris data dimulai dari baris ke 2
-        foreach ($detail as $key => $value) {
-            $sheet->setCellValue('A' . $baris, $no);
-            $sheet->setCellValue('B' . $baris, $value->penjualan->penjualan_kode);
-            $sheet->setCellValue('C' . $baris, $value->barang->barang_nama); // Ini harus ada di kolom C
-$sheet->setCellValue('D' . $baris, $value->harga); // Ini harus ada di kolom D
-            $sheet->setCellValue('E' . $baris, $value->jumlah);
-            $baris++;
-            $no++;
-        }
-        foreach (range('A', 'E') as $columnID) {
-            $sheet->getColumnDimension($columnID)->setAutoSize(true); // set auto size untuk kolom
-        }
-        $sheet->setTitle('Data Detail Penjualan'); // set title sheet
-        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $filename = 'Data_detail_Penjualan_' . now()->format('Y-m-d_H:i:s') . '.xlsx';
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-        header('Cache-Control: max-age=1');
-        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-        header('Last-Modified:' . gmdate('D, d M Y H:i:s') . ' GMT');
-        header('Cache-Control: cache, must-revalidate');
-        header('Pragma: public');
-        $writer->save('php://output');
-        exit;
-    } // end function export_excel
+{
+    // ambil data detail yang akan di export
+    $detail = DetailModel::select('detail_id', 'penjualan_id', 'barang_id', 'harga', 'jumlah')
+        ->orderBy('detail_id')
+        ->with(['penjualan', 'barang']) // pastikan kedua relasi di-load
+        ->get();
+
+    // load library excel
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet(); // ambil sheet yang aktif
+
+    // Menambahkan header
+    $sheet->setCellValue('A1', 'No');
+    $sheet->setCellValue('B1', 'Kode Penjualan');
+    $sheet->setCellValue('C1', 'Nama Barang');
+    $sheet->setCellValue('D1', 'Harga');
+    $sheet->setCellValue('E1', 'Jumlah');
+    $sheet->getStyle('A1:E1')->getFont()->setBold(true); // header bold
+
+    // Memulai data dari baris kedua
+    $no = 1;
+    $baris = 2;
+
+    foreach ($detail as $key => $value) {
+        $sheet->setCellValue('A' . $baris, $no);
+        
+        // Menggunakan optional untuk menghindari error jika penjualan atau barang tidak ditemukan
+        $sheet->setCellValue('B' . $baris, optional($value->penjualan)->penjualan_kode ?? 'Tidak Ditemukan');
+        $sheet->setCellValue('C' . $baris, optional($value->barang)->barang_nama ?? 'Tidak Ditemukan');
+        
+        $sheet->setCellValue('D' . $baris, $value->harga);
+        $sheet->setCellValue('E' . $baris, $value->jumlah);
+
+        $baris++;
+        $no++;
+    }
+
+    // Mengatur lebar kolom secara otomatis
+    foreach (range('A', 'E') as $columnID) {
+        $sheet->getColumnDimension($columnID)->setAutoSize(true);
+    }
+
+    // Memberi judul pada sheet
+    $sheet->setTitle('Data Detail Penjualan');
+
+    // Membuat file excel untuk diunduh
+    $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+    $filename = 'Data_detail_Penjualan_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+    // Menyiapkan header untuk unduhan
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+    header('Last-Modified:' . gmdate('D, d M Y H:i:s') . ' GMT');
+    header('Cache-Control: cache, must-revalidate');
+    header('Pragma: public');
+
+    // Menyimpan output
+    $writer->save('php://output');
+    exit;
+}
+
     public function export_pdf()
     {
         set_time_limit(120); 
-        
+
         $detail = DetailModel::select('detail_id', 'penjualan_id', 'barang_id', 'harga', 'jumlah')
             ->orderBy('detail_id')
             ->with('barang')
